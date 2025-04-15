@@ -1,0 +1,78 @@
+Backend Code (Server.Js)
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const mysql = require('mysql');
+
+const app = express();
+const port = 3000;
+
+// Middleware
+app.use(bodyParser.json());
+
+// MySQL connection
+const db = mysql.createConnection({
+    host: 'localhost', // Your DB host
+    user: 'root',      // Your DB username
+    password: '',      // Your DB password
+    database: 'elearning' // Your DB name
+});
+
+// Connect to MySQL
+db.connect((err) => {
+    if (err) {
+        console.error('Error connecting to the database:', err.message);
+        return;
+    }
+    console.log('Connected to the MySQL database.');
+});
+
+// API to get all students
+app.get('/students', (req, res) => {
+    db.query('SELECT * FROM students', (err, results) => {
+        if (err) {
+            console.error(err.message);
+            res.status(500).send('Server error');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+// API to add a student
+app.post('/students', (req, res) => {
+    const { name, email, course } = req.body;
+
+    if (!name || !email || !course) {
+        res.status(400).send('All fields are required.');
+        return;
+    }
+
+    const query = 'INSERT INTO students (name, email, course) VALUES (?, ?, ?)';
+    db.query(query, [name, email, course], (err, results) => {
+        if (err) {
+            console.error(err.message);
+            res.status(500).send('Server error');
+        } else {
+            res.status(201).send('Student added successfully!');
+        }
+    });
+});
+
+// Start server
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+});
+Database Setup (SQL)
+CREATE DATABASE elearning;
+
+USE elearning;
+
+CREATE TABLE students (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    course VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
